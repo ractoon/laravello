@@ -14,15 +14,23 @@
         <span v-else>{{ board.title }}</span>
       </div>
       <div class="flex flex-1 items-start overflow-x-auto mx-2" v-if="board">
-        <List v-for="list in board.lists" :key="list.id" :list="list" />
+        <List
+          v-for="list in board.lists"
+          :key="list.id"
+          :list="list"
+          @card-added="updateQueryCache($event)"
+          @card-updated="updateQueryCache($event)"
+          @card-deleted="updateQueryCache($event)"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import gql from "graphql-tag";
+import { EVENT_CARD_ADDED, EVENT_CARD_UPDATED, EVENT_CARD_DELETED } from './constants';
 import List from "./components/List.vue";
+import BoardQuery from './graphql/BoardWithListsAndCards.gql';
 
 export default {
   components: {
@@ -30,26 +38,39 @@ export default {
   },
   apollo: {
     board: {
-      query: gql`
-        query ($id: ID!) {
-          board(id: $id) {
-            title
-            color
-            lists {
-              id
-              title
-              cards {
-                id
-                title
-                order
-              }
-            }
-          }
-        }
-      `,
+      query: BoardQuery,
       variables: {
         id: 1,
       },
+    },
+  },
+  methods: {
+    updateQueryCache(event) {
+      const data = event.store.readQuery({
+        query: BoardQuery,
+        variables: {
+          id: Number(this.board.id),
+        },
+      });
+
+      const listById = () => data.board.lists.find(list => list.id === event.listId);
+
+      switch (event.type) {
+        case EVENT_CARD_ADDED:
+          listById().cards.push(event.data);
+          break;
+        case EVENT_CARD_UPDATED:
+          listById().cards.filter(card => card.id === event.data.id).title = event.data.title;
+          break;
+        case EVENT_CARD_DELETED:
+          listById().cards = listById().cards.filter(card => card.id !== event.data.id);
+          break;
+      }
+
+      event.store.writeQuery({
+        query: BoardQuery,
+        data,
+      });
     },
   },
 };
