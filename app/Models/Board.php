@@ -6,12 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class Board extends Model
 {
     use HasFactory;
 
     protected $fillable = ['title', 'color', 'owner_id'];
+
+    protected static function booted()
+    {
+        static::creating(function (Board $board) {
+            if (Auth::user()) {
+                $board->owner()->associate(Auth::user());
+            }
+        });
+    }
 
     public function lists(): HasMany
     {

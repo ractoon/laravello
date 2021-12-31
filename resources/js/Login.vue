@@ -5,9 +5,12 @@
         <span>Laravello</span>
       </div>
       <div class="w-full sm:shadow-xl sm:bg-white sm:py-8 sm:px-12">
+        <Errors :errors="errors" />
+
         <div class="w-full text-center text-gray-600 font-bold mb-8">
           Log in to Laravello
         </div>
+
         <form @submit.prevent="authenticate">
           <div class="w-full mb-4">
             <input v-model="email" type="text" class="rounded-sm px-4 py-2 outline-none focus:outline-none border-gray-400 bg-gray-100 border-solid border-2 w-full text-sm" placeholder="Enter email" />
@@ -30,23 +33,42 @@
 
 <script>
 import Login from './graphql/Login.gql';
+import { gqlErrors } from './utils';
+import Errors from './components/Errors.vue';
 
 export default {
+  components: {
+    Errors,
+  },
   data() {
     return {
       email: null,
       password: null,
+      errors: [],
     };
   },
   methods: {
-    authenticate() {
-      this.$apollo.mutate({
-        mutation: Login,
-        variables: {
-          email: this.email,
-          password: this.password,
-        },
-      });
+    async authenticate() {
+      this.errors = [];
+
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: Login,
+          variables: {
+            email: this.email,
+            password: this.password,
+          },
+        });
+
+        const user = response.data?.login;
+        if (user) {
+          this.$store.dispatch('setLoggedIn', true);
+          this.$store.commit('setUser', user);
+          this.$router.push({ name: 'board' });
+        }
+      } catch (err) {
+        this.errors = gqlErrors(err);
+      }
     },
   },
 }

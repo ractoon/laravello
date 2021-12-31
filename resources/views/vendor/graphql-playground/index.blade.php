@@ -19,7 +19,7 @@
 
 <body>
 
-<div id="root"/>
+<div id="root"></div>
 <script type="text/javascript">
     window.addEventListener('load', function () {
         const root = document.getElementById('root');
@@ -31,8 +31,8 @@
                 'request.credentials': 'same-origin',
             },
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
         })
     })
 </script>

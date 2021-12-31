@@ -16,7 +16,7 @@ class Login
         $guard = Auth::guard(config('sanctum.guard', 'web'));
 
         if (!$guard->attempt($args)) {
-            throw new Error('Inalid credentials');
+            throw new Error('Invalid credentials');
         }
 
         $user = $guard->user();
